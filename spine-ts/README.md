@@ -8,6 +8,7 @@ up into multiple modules:
 1. **Canvas**: `canvas/`, a self-contained Canvas backend, build on the core classes
 1. **THREE.JS**: `threejs/`, a self-contained THREE.JS backend, build on the core classes
 1. **Widget**: `widget/`, a self-contained widget to easily display Spine animations on your website, build on core classes & WebGL backend.
+1. **Babylons**: `babylonjs/`, a self-contained BabylonJS backend, build on the core classes
 
 While the source code for the core library and backends is written in TypeScript, all code is compiled to easily consumable JavaScript.
 
@@ -35,6 +36,7 @@ spine-ts does not yet support loading the binary format.
 3. To use the Canvas backend, include the `spine-canvas.js` file in your project.
 4. To use the Widget, include `spine-widget.js` file in your project.
 5. To use the THREE.JS backend, include the `spine-threejs.js` file in your project. THREE.JS must be loaded first.
+6. To use the THREE.JS backend, include the `spine-babylonjs.js` file in your project. BabylonJS must be loaded first.
 
 All `*.js` files are self-contained and include both the core and respective backend classes.
 
@@ -93,6 +95,7 @@ setup a development environment, follow these steps.
   * **Canvas**: `tsc -w -p tsconfig.canvas.json`, builds `core/src` and `canvas/src`, outputs `build/spine-canvas.js|d.ts|js.map`
   * **THREE.JS**: `tsc -w -p tsconfig.threejs.json`, builds `core/src` and `threejs/src`, outputs `build/spine-threejs.js|d.ts|js.map`
   * **Widget**: `tsc -w -p tsconfig.widget.json`, builds `core/src` and `widget/src`, outputs `build/spine-widget.js|d.ts|js.map`
+  * **BabylonJS**: `tsc -w -p tsconfig.babylonjs.json`, builds `core/src` and `babylonjs/src`, outputs `build/spine-babylonjs.js|d.ts|js.map`
 6. Open the `spine-ts` folder in Visual Studio Code. VS Code will use the `tsconfig.json` file all source files from core and all
 backends for your development pleasure. The actual JavaScript output is still created by the command line TypeScript compiler process from the previous step.
 

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Babylon - Getting Started</title>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/babylonjs/3.3.0/babylon.js"></script>
+    <script src="../../build/spine-babylonjs.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width   : 100%;
+            height  : 100%;
+            margin  : 0;
+            padding : 0;
+        }
+
+        #renderCanvas {
+            width   : 100%;
+            height  : 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+
+      BABYLON.Effect.ShadersStore["customVertexShader"]=
+        "precision highp float;\r\n"+
+        "// Attributes\r\n"+
+        "attribute vec3 position;\r\n"+
+        "attribute vec2 uv;\r\n"+
+        "attribute vec4 color;\r\n"+
+
+        "// Uniforms\r\n"+
+        "uniform mat4 worldViewProjection;\r\n"+
+
+        "// Varying\r\n"+
+        "varying vec2 vUv;\r\n"+
+        "varying vec4 vColor;\r\n"+
+
+        "void main() {\r\n"+
+        "    vUv = uv;\r\n"+
+        "    vColor = color;\r\n"+
+        "    vec4 p = vec4( position, 1. );\r\n"+
+        "    gl_Position = worldViewProjection * p;\r\n"+
+        "}\r\n";
+
+      BABYLON.Effect.ShadersStore["customFragmentShader"]=
+        "precision highp float;\r\n"+
+        "varying vec2 vUv;\r\n"+
+        "varying vec4 vColor;\r\n"+
+
+        "uniform sampler2D map;\r\n"+
+
+        "void main(void) {\r\n"+
+        "    gl_FragColor = texture2D(map, vUv)*vColor;\r\n"+
+        "}\r\n";
+
+      var assetManager, scene, camera;
+      var lastFrameTime = Date.now() / 1000;
+
+      var atlasName = 'raptor';
+      var cameraRadius = 1000;
+
+      function load() {
+        if (assetManager.isLoadingComplete()) {
+
+          var mat = new BABYLON.StandardMaterial("texture1", scene);
+          mat.diffuseColor = new BABYLON.Color3(1,0,0);
+          mat.emissiveColor = new BABYLON.Color3(1,0,0);
+          mat.alpha = 1.0;
+          mat.wireframe = true;
+          var box = BABYLON.MeshBuilder.CreateBox('box', { size:200 }, scene);
+          box.material = mat;
+
+
+          var skeletonData = loadSkeleton(atlasName, .25);
+      		// Create a SkeletonMesh from the data and attach it to the scene
+          var skeletonMesh = new spine.babylonjs.SkeletonMesh('raptor', scene, skeletonData);
+          skeletonMesh.position.x = 100;
+          skeletonMesh.state.setAnimation(0, "walk", true);
+
+          skeletonMesh.onPickDownObservable.add(function(evt) {
+            console.log(evt);
+          });
+
+
+          var skel = skeletonMesh.spineSkeleton;
+          scene.getEngine().runRenderLoop(function () {
+            var now = Date.now() / 1000;
+          	var delta = now - lastFrameTime;
+            lastFrameTime = now;
+
+            // skeletonMesh.setDepth(d1);
+            skeletonMesh.update(delta);
+
+            scene.render();
+          });
+        } else {
+          requestAnimationFrame(load);
+        }
+      }
+
+      function loadSkeleton (name, scale) {
+      	// Load the texture atlas using name.atlas and name.png from the AssetManager.
+      	// The function passed to TextureAtlas is used to resolve relative paths.
+      	atlas = new spine.TextureAtlas(assetManager.get("assets/" + name + ".atlas"), function(path) {
+      		return assetManager.get("assets/" + path);
+      	});
+
+      	// Create a AtlasAttachmentLoader that resolves region, mesh, boundingbox and path attachments
+        atlasLoader = new spine.AtlasAttachmentLoader(atlas);
+
+      	// Create a SkeletonJson instance for parsing the .json file.
+      	var skeletonJson = new spine.SkeletonJson(atlasLoader);
+
+      	// Set the scale to apply during parsing, parse the file, and create a new skeleton.
+      	skeletonJson.scale = scale;
+      	var skeletonData = skeletonJson.readSkeletonData(assetManager.get("assets/" + name + ".json"));
+      	return skeletonData;
+      }
+
+      function loadAssets(name) {
+        if (!assetManager) return;
+
+        var lines, line, i = 0, pages = 0;
+        assetManager.loadText("assets/" + name + ".atlas", function(path, text) {
+
+          lines = text.split(/\r\n|\r|\n/);
+          while (true) {
+            line = (i >= lines.length) ? null : lines[i++];
+            if (line == null)
+              break;
+            line = line.trim();
+            if (line.length == 0)
+              pages++;
+          }
+
+          for (i = 1 ; i < pages; i++) {
+            assetManager.loadTexture("assets/" + (i > 1 ? name + i : name) + ".png");
+          }
+        });
+        assetManager.loadText("assets/" + name + ".json");
+
+      }
+
+      window.addEventListener('DOMContentLoaded', function(){
+        // get the canvas DOM element
+        var canvas = document.getElementById('renderCanvas');
+
+        // load the 3D engine
+        var engine = new BABYLON.Engine(canvas, true);
+        scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color3(1,1,1);
+        scene.ambientColor = new BABYLON.Color3(1,1,1);
+
+        camera = new BABYLON.ArcRotateCamera("Camera", 0, 0, 0, new BABYLON.Vector3(0,100,0) , scene);
+        camera.setPosition(new BABYLON.Vector3(0, 0, -cameraRadius));
+
+        camera.attachControl(canvas, true);
+        // scene.preventDefaultOnPointerDown = false;
+
+        assetManager = new spine.babylonjs.AssetManager(scene);
+        // loadAssets('character-hair');
+        loadAssets(atlasName);
+
+        load(scene);
+
+        // the canvas/window resize event handler
+        window.addEventListener('resize', function(){
+            engine.resize();
+        });
+
+      });
+
+  </script>
+</body>
+</html>
