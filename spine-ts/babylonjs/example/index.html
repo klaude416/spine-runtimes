@@ -62,6 +62,8 @@
 
       var atlasName = 'raptor';
       var cameraRadius = 1000;
+      var camera = null;
+      var orders = [];
 
       function load() {
         if (assetManager.isLoadingComplete()) {
@@ -80,6 +82,10 @@
           var skeletonMesh = new spine.babylonjs.SkeletonMesh('raptor', scene, skeletonData);
           skeletonMesh.position.x = 100;
           skeletonMesh.state.setAnimation(0, "walk", true);
+          
+          var skeletonMesh2 = new spine.babylonjs.SkeletonMesh('raptor2', scene, skeletonData);
+          skeletonMesh2.position.x = -100;
+          skeletonMesh2.state.setAnimation(0, "walk", true);
 
           skeletonMesh.onPickDownObservable.add(function(evt) {
             console.log(evt);
@@ -93,13 +99,38 @@
             lastFrameTime = now;
 
             // skeletonMesh.setDepth(d1);
+            skeletonMesh2.position.x += Math.sin(now);
+
             skeletonMesh.update(delta);
+            skeletonMesh2.update(delta);
+            setDepth();
 
             scene.render();
           });
         } else {
           requestAnimationFrame(load);
         }
+      }
+
+      function setDepth() {
+        orders = [];
+        camPosition = camera.position.clone();
+        scene.meshes.forEach(function(mesh) {
+          if (mesh.setDepth) {
+            orders.push({
+              mesh: mesh,
+              depth: mesh.position.z - camPosition.z
+            });
+          }
+        })
+        
+        orders.sort(function(a, b) {
+          return a.d - b.d;
+        });
+
+        orders.forEach(function(o, idx) {
+          o.mesh.setDepth(-idx);
+        });
       }
 
       function loadSkeleton (name, scale) {
